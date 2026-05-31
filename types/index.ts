@@ -1,51 +1,51 @@
-// Type stubs — will be expanded in Phase 2
+export type PostType = 'THOUGHT' | 'ARTICLE'
 
 export interface User {
-  id: string;
-  name?: string | null;
-  email: string;
-  image?: string | null;
-  createdAt?: Date;
+  id: string
+  username: string
+  email: string
+  displayName: string
+  bio?: string | null
+  avatarUrl?: string | null
+  createdAt: Date
 }
 
 export interface Post {
-  id: string;
-  title: string;
-  content: string;
-  authorId: string;
-  author?: User;
-  createdAt: Date;
-  updatedAt: Date;
-  upvotes: number;
-  commentCount: number;
-  tags: string[];
+  id: string
+  authorId: string
+  type: PostType
+  title?: string | null
+  body: string
+  slug: string
+  createdAt: Date
+  updatedAt: Date
+  author?: User
+  _count?: {
+    likes: number
+    comments: number
+    reposts: number
+  }
 }
 
 export interface Comment {
-  id: string;
-  content: string;
-  authorId: string;
-  author?: User;
-  postId: string;
-  createdAt: Date;
-  upvotes: number;
+  id: string
+  postId: string
+  authorId: string
+  body: string
+  parentId?: string | null
+  createdAt: Date
+  author?: User
+  replies?: Comment[]
 }
 
 export interface Topic {
-  id: string;
-  name: string;
-  slug: string;
-  description?: string;
-  postCount: number;
-}
-
-export interface TrendingTopic {
-  tag: string;
-  count: number;
+  id: string
+  name: string
+  slug: string
 }
 
 export interface NavItem {
-  label: string;
-  href: string;
-  icon?: React.ReactNode;
+  label: string
+  href: string
+  icon?: React.ReactNode
 }

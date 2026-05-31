@@ -1,0 +1,19 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx create-next-app@latest . --typescript --tailwind --eslint --app --no-src-dir --import-alias \"@/*\")",
+      "Read(//usr/local/bin/**)",
+      "Read(//Users/a/.nvm/versions/**)",
+      "Bash(ls /usr/local/bin/ | grep -E \"node|npm\" 2>/dev/null; ls /opt/homebrew/bin/ | grep -E \"node|npm\" 2>/dev/null; ls ~/.volta/bin/ 2>/dev/null | head -10)",
+      "Bash(find /usr /opt /home -name \"node\" -type f 2>/dev/null | head -5; find /Users/a -name \"node\" -type f 2>/dev/null | head -5)",
+      "Bash(curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh)",
+      "Bash(bash)",
+      "Bash(git init *)",
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)",
+      "Bash(npx prisma *)",
+      "Bash(ls /private/tmp/claude-501)",
+      "Bash(node -e \"const m = require\\('/Users/a/Desktop/career down/node_modules/@prisma/adapter-better-sqlite3'\\); console.log\\(Object.keys\\(m\\)\\)\")"
+    ]
+  }
+}
