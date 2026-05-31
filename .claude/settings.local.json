@@ -13,7 +13,9 @@
       "Bash(git commit -m ' *)",
       "Bash(npx prisma *)",
       "Bash(ls /private/tmp/claude-501)",
-      "Bash(node -e \"const m = require\\('/Users/a/Desktop/career down/node_modules/@prisma/adapter-better-sqlite3'\\); console.log\\(Object.keys\\(m\\)\\)\")"
+      "Bash(node -e \"const m = require\\('/Users/a/Desktop/career down/node_modules/@prisma/adapter-better-sqlite3'\\); console.log\\(Object.keys\\(m\\)\\)\")",
+      "Bash(mkdir -p \"/Users/a/Desktop/career down/app/api/auth/[...nextauth]\" \"/Users/a/Desktop/career down/app/api/auth/signup\" \"/Users/a/Desktop/career down/app/\\(auth\\)/login\" \"/Users/a/Desktop/career down/app/\\(auth\\)/signup\" \"/Users/a/Desktop/career down/app/\\(main\\)\" \"/Users/a/Desktop/career down/components/providers\")",
+      "Bash(NEXTAUTH_SECRET=dev-secret-for-build npm run build)"
     ]
   }
 }
