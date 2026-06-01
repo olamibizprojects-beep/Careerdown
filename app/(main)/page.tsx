@@ -79,7 +79,7 @@ export default async function HomePage() {
     })
   }
 
-  const postIds = posts.map((p) => p.id)
+  const postIds = posts.map((p: { id: string }) => p.id)
 
   const likedPostIds = new Set<string>()
   const repostedPostIds = new Set<string>()
