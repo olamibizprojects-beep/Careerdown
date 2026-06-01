@@ -6,6 +6,7 @@ import { authOptions } from '@/lib/auth'
 import Sidebar from '@/components/layout/Sidebar'
 import RightRail from '@/components/layout/RightRail'
 import PostCard from '@/components/feed/PostCard'
+import { EmptyState } from '@/components/ui/EmptyState'
 
 interface Props {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>
@@ -172,9 +173,12 @@ export default async function ExplorePage({ searchParams }: Props) {
 
         {/* Posts */}
         {posts.length === 0 ? (
-          <div className="rounded-xl border border-slate-800 bg-slate-900 p-10 text-center text-slate-500">
-            No posts found.
-          </div>
+          <EmptyState
+            icon="🔍"
+            title="No posts found"
+            description={q ? `No results for "${q}". Try a different search.` : 'No posts in this category yet.'}
+            action={{ label: 'Browse all posts', href: '/explore' }}
+          />
         ) : (
           <div className="space-y-3">
             {posts.map((post) => (

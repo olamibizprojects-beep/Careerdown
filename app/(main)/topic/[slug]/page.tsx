@@ -6,6 +6,7 @@ import { prisma } from '@/lib/prisma'
 import PostCard from '@/components/feed/PostCard'
 import Sidebar from '@/components/layout/Sidebar'
 import RightRail from '@/components/layout/RightRail'
+import { EmptyState } from '@/components/ui/EmptyState'
 
 interface Props {
   params: Promise<{ slug: string }>
@@ -74,9 +75,12 @@ export default async function TopicPage({ params }: Props) {
         </div>
 
         {posts.length === 0 ? (
-          <div className="rounded-xl border border-slate-800 bg-slate-900 p-10 text-center text-slate-500">
-            No posts yet for this topic.
-          </div>
+          <EmptyState
+            icon="🏷️"
+            title={`No posts tagged #${topic.name} yet`}
+            description="Be the first to share something on this topic."
+            action={{ label: 'Create a Post', href: '/compose' }}
+          />
         ) : (
           <div className="space-y-3">
             {posts.map((post) => (

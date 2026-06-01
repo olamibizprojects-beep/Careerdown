@@ -9,6 +9,7 @@ import ProfileTabs from '@/components/profile/ProfileTabs'
 import Sidebar from '@/components/layout/Sidebar'
 import RightRail from '@/components/layout/RightRail'
 import { JsonLd } from '@/components/seo/JsonLd'
+import { EmptyState } from '@/components/ui/EmptyState'
 
 interface Props {
   params: Promise<{ username: string }>
@@ -190,9 +191,24 @@ export default async function ProfilePage({ params, searchParams }: Props) {
         {/* Posts */}
         <div className="mt-4 space-y-3">
           {posts.length === 0 ? (
-            <div className="rounded-xl border border-slate-800 bg-slate-900 p-10 text-center text-slate-500">
-              No posts yet.
-            </div>
+            <EmptyState
+              icon={tab === 'likes' ? '🤍' : '✍️'}
+              title={
+                tab === 'likes'
+                  ? 'No liked posts yet'
+                  : tab === 'articles'
+                  ? 'No articles yet'
+                  : 'No posts yet'
+              }
+              description={
+                isOwnProfile
+                  ? tab === 'likes'
+                    ? 'Posts you like will appear here.'
+                    : 'Share your first career story.'
+                  : undefined
+              }
+              action={isOwnProfile && tab !== 'likes' ? { label: 'Create a Post', href: '/compose' } : undefined}
+            />
           ) : (
             posts.map((post) => (
               <PostCard

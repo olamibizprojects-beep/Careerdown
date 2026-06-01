@@ -6,6 +6,7 @@ import Sidebar from '@/components/layout/Sidebar'
 import RightRail from '@/components/layout/RightRail'
 import PostCard from '@/components/feed/PostCard'
 import { AdSlot } from '@/components/ads/AdSlot'
+import { EmptyState } from '@/components/ui/EmptyState'
 
 const postInclude = {
   author: true,
@@ -129,10 +130,12 @@ export default async function HomePage() {
         </div>
 
         {posts.length === 0 ? (
-          <div className="rounded-xl border border-slate-800 bg-slate-900 p-10 text-center text-slate-500">
-            <p className="mb-3">No posts yet.</p>
-            <Link href="/compose" className="text-indigo-400 hover:underline">Be the first to post!</Link>
-          </div>
+          <EmptyState
+            icon="📭"
+            title="No posts yet"
+            description="Be the first to share your career story."
+            action={{ label: 'Create a Post', href: '/compose' }}
+          />
         ) : (
           <div className="space-y-3">
             {posts.map((post, i) => (

@@ -1,16 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import bcrypt from 'bcryptjs'
+import { sanitizeText } from '@/lib/sanitize'
 
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json()
-    const { email, username, password, displayName } = body as {
+    let { email, username, password, displayName } = body as {
       email?: string
       username?: string
       password?: string
       displayName?: string
     }
+
+    // Sanitize text inputs
+    if (displayName) displayName = sanitizeText(displayName)
+    if (username) username = sanitizeText(username)
 
     // Validate required fields
     if (!email || !username || !password || !displayName) {

@@ -3,6 +3,9 @@ import { revalidatePath } from 'next/cache'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { rateLimit } from '@/lib/rateLimit'
+import { sanitizeText } from '@/lib/sanitize'
+
 function generateSlug(base: string, suffix: string): string {
   const slug = base.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
   return `${slug}-${suffix}`
@@ -16,7 +19,13 @@ export async function createThought(formData: FormData) {
   const session = await getServerSession(authOptions)
   if (!session?.user) return { error: 'Not authenticated' }
 
-  const body = (formData.get('body') as string)?.trim()
+  const userId = (session.user as { id: string }).id
+  if (!rateLimit(`post:${userId}`, 10, 60_000)) {
+    return { error: 'You are posting too fast. Please wait a moment.' }
+  }
+
+  const rawBody = formData.get('body') as string
+  const body = sanitizeText(rawBody ?? '')
   if (!body) return { error: 'Body is required' }
   if (body.length > 1000) return { error: 'Body must be 1000 characters or fewer' }
 
@@ -28,7 +37,7 @@ export async function createThought(formData: FormData) {
   try {
     const post = await prisma.post.create({
       data: {
-        authorId: (session.user as { id: string }).id,
+        authorId: userId,
         type: 'THOUGHT',
         body,
         slug,
@@ -50,8 +59,13 @@ export async function createArticle(formData: FormData) {
   const session = await getServerSession(authOptions)
   if (!session?.user) return { error: 'Not authenticated' }
 
-  const title = (formData.get('title') as string)?.trim()
-  const body = (formData.get('body') as string)?.trim()
+  const userId = (session.user as { id: string }).id
+  if (!rateLimit(`post:${userId}`, 10, 60_000)) {
+    return { error: 'You are posting too fast. Please wait a moment.' }
+  }
+
+  const title = sanitizeText((formData.get('title') as string) ?? '')
+  const body = sanitizeText((formData.get('body') as string) ?? '')
 
   if (!title) return { error: 'Title is required' }
   if (title.length > 100) return { error: 'Title must be 100 characters or fewer' }
@@ -64,7 +78,7 @@ export async function createArticle(formData: FormData) {
   try {
     const post = await prisma.post.create({
       data: {
-        authorId: (session.user as { id: string }).id,
+        authorId: userId,
         type: 'ARTICLE',
         title,
         body,

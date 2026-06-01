@@ -39,7 +39,16 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${geistSans.variable} h-full antialiased dark`}>
+    <html lang="en" suppressHydrationWarning className={`${geistSans.variable} h-full antialiased dark`}>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: `
+          (function() {
+            var theme = localStorage.getItem('theme');
+            if (theme === 'light') { document.documentElement.classList.remove('dark'); }
+            else { document.documentElement.classList.add('dark'); }
+          })();
+        ` }} />
+      </head>
       <body className="min-h-full bg-slate-950 text-slate-100">
         <SessionProvider>{children}</SessionProvider>
         {process.env.NEXT_PUBLIC_ADSENSE_PUBLISHER_ID && (

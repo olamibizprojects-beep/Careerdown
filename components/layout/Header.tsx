@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { useSession, signOut } from "next-auth/react";
+import { DarkModeToggle } from "@/components/ui/DarkModeToggle";
 
 export default function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -86,6 +87,7 @@ export default function Header() {
 
         {/* Right: Actions */}
         <div className="flex items-center gap-2">
+          <DarkModeToggle />
           {status === 'authenticated' && (
             <Link
               href="/post/new"
