@@ -20,14 +20,24 @@ export default async function HomePage() {
     },
   })
 
-  // Check which posts current user has liked
+  const postIds = posts.map((p) => p.id)
+
+  // Check which posts current user has liked / reposted
   const likedPostIds = new Set<string>()
+  const repostedPostIds = new Set<string>()
   if (currentUserId) {
-    const likes = await prisma.like.findMany({
-      where: { userId: currentUserId, postId: { in: posts.map((p) => p.id) } },
-      select: { postId: true },
-    })
+    const [likes, reposts] = await Promise.all([
+      prisma.like.findMany({
+        where: { userId: currentUserId, postId: { in: postIds } },
+        select: { postId: true },
+      }),
+      prisma.repost.findMany({
+        where: { userId: currentUserId, postId: { in: postIds } },
+        select: { postId: true },
+      }),
+    ])
     likes.forEach((l) => likedPostIds.add(l.postId))
+    reposts.forEach((r) => repostedPostIds.add(r.postId))
   }
 
   return (
@@ -78,6 +88,7 @@ export default async function HomePage() {
                 post={post}
                 currentUserId={currentUserId}
                 isLiked={likedPostIds.has(post.id)}
+                isReposted={repostedPostIds.has(post.id)}
               />
             ))}
           </div>

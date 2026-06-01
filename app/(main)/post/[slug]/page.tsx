@@ -1,7 +1,10 @@
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
+import { getServerSession } from 'next-auth'
+import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import CommentsSection from '@/components/posts/CommentsSection'
+import FollowButton from '@/components/posts/FollowButton'
 import { relativeTime } from '@/lib/utils'
 
 interface Props {
@@ -20,6 +23,8 @@ export async function generateMetadata({ params }: Props) {
 
 export default async function PostPage({ params }: Props) {
   const { slug } = await params
+  const session = await getServerSession(authOptions)
+  const currentUserId = (session?.user as { id?: string } | null)?.id
 
   const post = await prisma.post.findUnique({
     where: { slug },
@@ -48,6 +53,16 @@ export default async function PostPage({ params }: Props) {
   })
 
   if (!post) notFound()
+
+  // Check follow status
+  const isOwnPost = currentUserId === post.authorId
+  let isFollowing = false
+  if (currentUserId && !isOwnPost) {
+    const follow = await prisma.follow.findUnique({
+      where: { followerId_followingId: { followerId: currentUserId, followingId: post.authorId } },
+    })
+    isFollowing = !!follow
+  }
 
   const authorInitials = post.author.displayName
     .split(' ')
@@ -119,9 +134,12 @@ export default async function PostPage({ params }: Props) {
                   </Link>
                   <p className="text-xs text-slate-500">@{post.author.username}</p>
                 </div>
-                <button className="rounded-full border border-indigo-600 px-3 py-1 text-xs font-medium text-indigo-400 hover:bg-indigo-600 hover:text-white transition-colors">
-                  Follow
-                </button>
+                {!isOwnPost && (
+                  <FollowButton
+                    targetUserId={post.authorId}
+                    initialFollowing={isFollowing}
+                  />
+                )}
               </div>
               {post.author.bio && (
                 <p className="mt-2 text-xs text-slate-400">{post.author.bio}</p>

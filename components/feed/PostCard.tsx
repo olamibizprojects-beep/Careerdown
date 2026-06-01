@@ -1,6 +1,8 @@
 'use client'
+import { useOptimistic, useTransition } from 'react'
 import Link from 'next/link'
 import { relativeTime, truncate } from '@/lib/utils'
+import { toggleLike, toggleRepost } from '@/lib/actions/interactions'
 
 interface PostCardProps {
   post: {
@@ -16,6 +18,7 @@ interface PostCardProps {
   }
   currentUserId?: string
   isLiked?: boolean
+  isReposted?: boolean
 }
 
 function Avatar({ displayName, avatarUrl }: { displayName: string; avatarUrl: string | null }) {
@@ -38,8 +41,40 @@ function Avatar({ displayName, avatarUrl }: { displayName: string; avatarUrl: st
   )
 }
 
-export default function PostCard({ post, isLiked = false }: PostCardProps) {
+export default function PostCard({ post, isLiked = false, isReposted = false }: PostCardProps) {
   const isArticle = post.type === 'ARTICLE'
+
+  const [isPending, startTransition] = useTransition()
+
+  const [optimisticLikes, addOptimisticLike] = useOptimistic(
+    { count: post._count.likes, liked: isLiked },
+    (state, action: 'like' | 'unlike') => ({
+      count: action === 'like' ? state.count + 1 : state.count - 1,
+      liked: action === 'like',
+    })
+  )
+
+  const [optimisticReposts, addOptimisticRepost] = useOptimistic(
+    { count: post._count.reposts, reposted: isReposted },
+    (state, action: 'repost' | 'unrepost') => ({
+      count: action === 'repost' ? state.count + 1 : state.count - 1,
+      reposted: action === 'repost',
+    })
+  )
+
+  const handleLike = () => {
+    startTransition(async () => {
+      addOptimisticLike(optimisticLikes.liked ? 'unlike' : 'like')
+      await toggleLike(post.id)
+    })
+  }
+
+  const handleRepost = () => {
+    startTransition(async () => {
+      addOptimisticRepost(optimisticReposts.reposted ? 'unrepost' : 'repost')
+      await toggleRepost(post.id)
+    })
+  }
 
   return (
     <article className="rounded-xl border border-slate-800 bg-slate-900 p-5 transition-colors hover:border-slate-700">
@@ -103,8 +138,15 @@ export default function PostCard({ post, isLiked = false }: PostCardProps) {
 
       {/* Action bar */}
       <div className="flex items-center gap-4 text-slate-500">
-        <button className={`flex items-center gap-1.5 text-xs transition-colors hover:text-rose-400 ${isLiked ? 'text-rose-400' : ''}`}>
-          {isLiked ? (
+        {/* Like button */}
+        <button
+          onClick={handleLike}
+          disabled={isPending}
+          className={`flex items-center gap-1.5 text-xs transition-colors hover:text-rose-400 disabled:opacity-70 ${
+            optimisticLikes.liked ? 'text-rose-400' : ''
+          }`}
+        >
+          {optimisticLikes.liked ? (
             <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 24 24">
               <path d="M11.645 20.91l-.007-.003-.022-.012a15.247 15.247 0 01-.383-.218 25.18 25.18 0 01-4.244-3.17C4.688 15.36 2.25 12.174 2.25 8.25 2.25 5.322 4.714 3 7.688 3A5.5 5.5 0 0112 5.052 5.5 5.5 0 0116.313 3c2.973 0 5.437 2.322 5.437 5.25 0 3.925-2.438 7.111-4.739 9.256a25.175 25.175 0 01-4.244 3.17 15.247 15.247 0 01-.383.219l-.022.012-.007.004-.003.001a.752.752 0 01-.704 0l-.003-.001z" />
             </svg>
@@ -113,9 +155,10 @@ export default function PostCard({ post, isLiked = false }: PostCardProps) {
               <path strokeLinecap="round" strokeLinejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z" />
             </svg>
           )}
-          {post._count.likes}
+          {optimisticLikes.count}
         </button>
 
+        {/* Comment link */}
         <Link href={`/post/${post.slug}#comments`} className="flex items-center gap-1.5 text-xs hover:text-indigo-400 transition-colors">
           <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 12.76c0 1.6 1.123 2.994 2.707 3.227 1.068.157 2.148.279 3.238.364.466.037.893.281 1.153.671L12 21l2.652-3.978c.26-.39.687-.634 1.153-.67 1.09-.086 2.17-.208 3.238-.365 1.584-.233 2.707-1.626 2.707-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0 0 12 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018Z" />
@@ -123,11 +166,18 @@ export default function PostCard({ post, isLiked = false }: PostCardProps) {
           {post._count.comments}
         </Link>
 
-        <button className="flex items-center gap-1.5 text-xs hover:text-green-400 transition-colors">
+        {/* Repost button */}
+        <button
+          onClick={handleRepost}
+          disabled={isPending}
+          className={`flex items-center gap-1.5 text-xs transition-colors hover:text-green-400 disabled:opacity-70 ${
+            optimisticReposts.reposted ? 'text-green-400' : ''
+          }`}
+        >
           <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 12c0-1.232-.046-2.453-.138-3.662a4.006 4.006 0 0 0-3.7-3.7 48.678 48.678 0 0 0-7.324 0 4.006 4.006 0 0 0-3.7 3.7c-.017.22-.032.441-.046.662M19.5 12l3-3m-3 3-3-3m-12 3c0 1.232.046 2.453.138 3.662a4.006 4.006 0 0 0 3.7 3.7 48.656 48.656 0 0 0 7.324 0 4.006 4.006 0 0 0 3.7-3.7c.017-.22.032-.441.046-.662M4.5 12l3 3m-3-3-3 3" />
           </svg>
-          {post._count.reposts}
+          {optimisticReposts.count}
         </button>
       </div>
     </article>
