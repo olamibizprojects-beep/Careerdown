@@ -6,23 +6,79 @@ import Sidebar from '@/components/layout/Sidebar'
 import RightRail from '@/components/layout/RightRail'
 import PostCard from '@/components/feed/PostCard'
 
+const postInclude = {
+  author: true,
+  topics: { include: { topic: true } },
+  _count: { select: { likes: true, comments: true, reposts: true } },
+} as const
+
+function engagementScore(post: {
+  _count: { likes: number; comments: number; reposts: number }
+  createdAt: Date
+}): number {
+  const now = Date.now()
+  const ageMs = now - new Date(post.createdAt).getTime()
+  const ageH = ageMs / (1000 * 60 * 60)
+  const recencyBoost = ageH < 24 ? 10 : ageH < 48 ? 5 : 0
+  return post._count.likes * 2 + post._count.comments + post._count.reposts + recencyBoost
+}
+
 export default async function HomePage() {
   const session = await getServerSession(authOptions)
   const currentUserId = (session?.user as { id?: string } | null)?.id
 
-  const posts = await prisma.post.findMany({
-    take: 20,
-    orderBy: { createdAt: 'desc' },
-    include: {
-      author: true,
-      topics: { include: { topic: true } },
-      _count: { select: { likes: true, comments: true, reposts: true } },
-    },
-  })
+  let posts: Awaited<ReturnType<typeof prisma.post.findMany<{ include: typeof postInclude }>>>
+
+  if (currentUserId) {
+    // Get IDs of users the current user follows
+    const follows = await prisma.follow.findMany({
+      where: { followerId: currentUserId },
+      select: { followingId: true },
+    })
+    const followingIds = follows.map((f) => f.followingId)
+
+    if (followingIds.length > 0) {
+      // Fetch followed posts + global posts separately then merge
+      const [followedPosts, globalPosts] = await Promise.all([
+        prisma.post.findMany({
+          where: { authorId: { in: followingIds } },
+          orderBy: { createdAt: 'desc' },
+          take: 30,
+          include: postInclude,
+        }),
+        prisma.post.findMany({
+          where: { authorId: { notIn: followingIds } },
+          orderBy: { createdAt: 'desc' },
+          take: 20,
+          include: postInclude,
+        }),
+      ])
+
+      // Sort each group by engagement score
+      followedPosts.sort((a, b) => engagementScore(b) - engagementScore(a))
+      globalPosts.sort((a, b) => engagementScore(b) - engagementScore(a))
+
+      // Combine: followed first, then global
+      posts = [...followedPosts, ...globalPosts].slice(0, 30)
+    } else {
+      // No follows yet — global chronological
+      posts = await prisma.post.findMany({
+        take: 30,
+        orderBy: { createdAt: 'desc' },
+        include: postInclude,
+      })
+    }
+  } else {
+    // No session — global chronological
+    posts = await prisma.post.findMany({
+      take: 30,
+      orderBy: { createdAt: 'desc' },
+      include: postInclude,
+    })
+  }
 
   const postIds = posts.map((p) => p.id)
 
-  // Check which posts current user has liked / reposted
   const likedPostIds = new Set<string>()
   const repostedPostIds = new Set<string>()
   if (currentUserId) {
@@ -42,12 +98,9 @@ export default async function HomePage() {
 
   return (
     <div className="flex gap-6 py-6">
-      {/* Left Sidebar */}
       <Sidebar />
 
-      {/* Main Feed */}
       <div className="min-w-0 flex-1">
-        {/* New post button + Feed tabs */}
         <div className="mb-4 flex items-center gap-3">
           <Link
             href="/compose"
@@ -74,7 +127,6 @@ export default async function HomePage() {
           </div>
         </div>
 
-        {/* Posts */}
         {posts.length === 0 ? (
           <div className="rounded-xl border border-slate-800 bg-slate-900 p-10 text-center text-slate-500">
             <p className="mb-3">No posts yet.</p>
@@ -95,7 +147,6 @@ export default async function HomePage() {
         )}
       </div>
 
-      {/* Right Rail */}
       <RightRail />
     </div>
   )

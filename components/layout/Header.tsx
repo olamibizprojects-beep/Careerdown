@@ -58,7 +58,7 @@ export default function Header() {
         </div>
 
         {/* Center: Search */}
-        <div className="mx-4 hidden max-w-md flex-1 sm:flex">
+        <form method="GET" action="/explore" className="mx-4 hidden max-w-md flex-1 sm:flex">
           <div className="relative w-full">
             <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
               <svg
@@ -77,11 +77,12 @@ export default function Header() {
             </div>
             <input
               type="search"
+              name="q"
               placeholder="Search posts, topics, users..."
               className="block w-full rounded-full border border-slate-700 bg-slate-800 py-2 pl-10 pr-4 text-sm text-slate-200 placeholder-slate-500 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
             />
           </div>
-        </div>
+        </form>
 
         {/* Right: Actions */}
         <div className="flex items-center gap-2">
@@ -180,18 +181,21 @@ export default function Header() {
 
       {/* Mobile search bar */}
       <div className="border-t border-slate-800 px-4 py-2 sm:hidden">
-        <div className="relative">
-          <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-            <svg className="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
-            </svg>
+        <form method="GET" action="/explore">
+          <div className="relative">
+            <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+              <svg className="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
+              </svg>
+            </div>
+            <input
+              type="search"
+              name="q"
+              placeholder="Search..."
+              className="block w-full rounded-full border border-slate-700 bg-slate-800 py-2 pl-10 pr-4 text-sm text-slate-200 placeholder-slate-500 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+            />
           </div>
-          <input
-            type="search"
-            placeholder="Search..."
-            className="block w-full rounded-full border border-slate-700 bg-slate-800 py-2 pl-10 pr-4 text-sm text-slate-200 placeholder-slate-500 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-          />
-        </div>
+        </form>
       </div>
     </header>
   );
