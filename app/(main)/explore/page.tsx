@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import type { Metadata } from 'next'
 import { prisma } from '@/lib/prisma'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
@@ -10,7 +11,10 @@ interface Props {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>
 }
 
-export const metadata = { title: 'Explore — CareerDown' }
+export const metadata: Metadata = {
+  title: 'Explore',
+  description: 'Discover career stories, advice, and discussions from professionals worldwide.',
+}
 
 export default async function ExplorePage({ searchParams }: Props) {
   const params = await searchParams

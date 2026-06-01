@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { prisma } from '@/lib/prisma'
+import { AdSlot } from '@/components/ads/AdSlot'
 
 export default async function RightRail() {
   const topicsRaw = await prisma.topic.findMany({
@@ -38,6 +39,8 @@ export default async function RightRail() {
             Explore all topics
           </Link>
         </div>
+
+        <AdSlot slot="sidebar" className="mt-4" />
 
         {/* Footer links */}
         <p className="px-2 text-xs text-slate-600">

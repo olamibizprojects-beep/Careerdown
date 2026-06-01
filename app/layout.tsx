@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Geist } from "next/font/google";
+import Script from "next/script";
 import "./globals.css";
 import { SessionProvider } from "@/components/providers/SessionProvider";
 
@@ -9,8 +10,27 @@ const geistSans = Geist({
 });
 
 export const metadata: Metadata = {
-  title: "CareerDown — Career Community",
-  description: "The career community platform for advice, discussions, and connections.",
+  metadataBase: new URL(process.env.NEXTAUTH_URL || 'http://localhost:3000'),
+  title: {
+    default: 'CareerDown — Career Stories, Advice & Community',
+    template: '%s | CareerDown',
+  },
+  description: 'Share your career struggles, wins, and advice. A community for professionals navigating layoffs, job searches, salary negotiations, and work-life balance.',
+  keywords: ['career advice', 'job search', 'layoffs', 'salary negotiation', 'work life balance', 'tech careers'],
+  openGraph: {
+    type: 'website',
+    siteName: 'CareerDown',
+    title: 'CareerDown — Career Stories, Advice & Community',
+    description: 'Share your career struggles, wins, and advice.',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    site: '@careerdown',
+  },
+  robots: {
+    index: true,
+    follow: true,
+  },
 };
 
 export default function RootLayout({
@@ -22,6 +42,14 @@ export default function RootLayout({
     <html lang="en" className={`${geistSans.variable} h-full antialiased dark`}>
       <body className="min-h-full bg-slate-950 text-slate-100">
         <SessionProvider>{children}</SessionProvider>
+        {process.env.NEXT_PUBLIC_ADSENSE_PUBLISHER_ID && (
+          <Script
+            async
+            src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-${process.env.NEXT_PUBLIC_ADSENSE_PUBLISHER_ID}`}
+            crossOrigin="anonymous"
+            strategy="lazyOnload"
+          />
+        )}
       </body>
     </html>
   );

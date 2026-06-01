@@ -1,5 +1,6 @@
 import { notFound } from 'next/navigation'
 import { getServerSession } from 'next-auth'
+import type { Metadata } from 'next'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import PostCard from '@/components/feed/PostCard'
@@ -10,11 +11,18 @@ interface Props {
   params: Promise<{ slug: string }>
 }
 
-export async function generateMetadata({ params }: Props) {
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params
   const topic = await prisma.topic.findUnique({ where: { slug } })
-  if (!topic) return {}
-  return { title: `#${topic.name} — CareerDown` }
+  if (!topic) return { title: 'Topic Not Found' }
+  const title = `#${topic.name}`
+  const description = `Browse career posts and discussions tagged #${topic.name} on CareerDown.`
+  return {
+    title,
+    description,
+    openGraph: { title, description, type: 'website' },
+    twitter: { card: 'summary', title, description },
+  }
 }
 
 export default async function TopicPage({ params }: Props) {

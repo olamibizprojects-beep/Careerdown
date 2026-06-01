@@ -53,7 +53,9 @@ function CommentItem({ comment, postId }: { comment: CommentData; postId: string
         <span className="font-semibold text-slate-300">{comment.author.displayName}</span>
         <span>@{comment.author.username}</span>
         <span>&middot;</span>
-        <span>{relativeTime(new Date(comment.createdAt))}</span>
+        <time dateTime={new Date(comment.createdAt).toISOString()}>
+          {relativeTime(new Date(comment.createdAt))}
+        </time>
       </div>
       <p className="mb-2 text-sm text-slate-300 whitespace-pre-line">{comment.body}</p>
       <div className="flex gap-3">

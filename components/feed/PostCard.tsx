@@ -89,7 +89,9 @@ export default function PostCard({ post, isLiked = false, isReposted = false }: 
           </Link>
           <span className="text-slate-500">@{post.author.username}</span>
           <span className="text-slate-600">&middot;</span>
-          <span className="text-xs text-slate-500">{relativeTime(new Date(post.createdAt))}</span>
+          <time dateTime={new Date(post.createdAt).toISOString()} className="text-xs text-slate-500">
+            {relativeTime(new Date(post.createdAt))}
+          </time>
         </div>
         {isArticle && (
           <span className="ml-auto rounded-full bg-indigo-600/20 px-2 py-0.5 text-xs font-medium text-indigo-400">

@@ -5,6 +5,7 @@ import { authOptions } from '@/lib/auth'
 import Sidebar from '@/components/layout/Sidebar'
 import RightRail from '@/components/layout/RightRail'
 import PostCard from '@/components/feed/PostCard'
+import { AdSlot } from '@/components/ads/AdSlot'
 
 const postInclude = {
   author: true,
@@ -134,14 +135,16 @@ export default async function HomePage() {
           </div>
         ) : (
           <div className="space-y-3">
-            {posts.map((post) => (
-              <PostCard
-                key={post.id}
-                post={post}
-                currentUserId={currentUserId}
-                isLiked={likedPostIds.has(post.id)}
-                isReposted={repostedPostIds.has(post.id)}
-              />
+            {posts.map((post, i) => (
+              <div key={post.id}>
+                <PostCard
+                  post={post}
+                  currentUserId={currentUserId}
+                  isLiked={likedPostIds.has(post.id)}
+                  isReposted={repostedPostIds.has(post.id)}
+                />
+                {(i + 1) % 5 === 0 && <AdSlot slot="in-feed" className="my-4" />}
+              </div>
             ))}
           </div>
         )}

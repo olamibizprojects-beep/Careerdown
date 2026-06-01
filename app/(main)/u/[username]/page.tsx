@@ -1,5 +1,6 @@
 import { notFound } from 'next/navigation'
 import { getServerSession } from 'next-auth'
+import type { Metadata } from 'next'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import PostCard from '@/components/feed/PostCard'
@@ -7,6 +8,7 @@ import FollowButton from '@/components/posts/FollowButton'
 import ProfileTabs from '@/components/profile/ProfileTabs'
 import Sidebar from '@/components/layout/Sidebar'
 import RightRail from '@/components/layout/RightRail'
+import { JsonLd } from '@/components/seo/JsonLd'
 
 interface Props {
   params: Promise<{ username: string }>
@@ -19,12 +21,22 @@ const postInclude = {
   _count: { select: { likes: true, comments: true, reposts: true } },
 } as const
 
-export async function generateMetadata({ params }: Props) {
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { username } = await params
   const user = await prisma.user.findUnique({ where: { username } })
-  if (!user) return {}
+  if (!user) return { title: 'User Not Found' }
+  const title = `${user.displayName} (@${user.username})`
+  const description = user.bio ?? `View ${user.displayName}'s posts and articles on CareerDown.`
   return {
-    title: `${user.displayName} (@${user.username}) — CareerDown`,
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      type: 'profile',
+      username: user.username,
+    },
+    twitter: { card: 'summary', title, description },
   }
 }
 
@@ -109,8 +121,21 @@ export default async function ProfilePage({ params, searchParams }: Props) {
     .slice(0, 2)
     .toUpperCase()
 
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'ProfilePage',
+    mainEntity: {
+      '@type': 'Person',
+      name: profileUser.displayName,
+      identifier: profileUser.username,
+      description: profileUser.bio,
+      image: profileUser.avatarUrl,
+    },
+  }
+
   return (
     <div className="flex gap-6 py-6">
+      <JsonLd data={jsonLd} />
       <Sidebar />
 
       <div className="min-w-0 flex-1">

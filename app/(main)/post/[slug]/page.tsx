@@ -1,23 +1,36 @@
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { getServerSession } from 'next-auth'
+import type { Metadata } from 'next'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import CommentsSection from '@/components/posts/CommentsSection'
 import FollowButton from '@/components/posts/FollowButton'
+import { AdSlot } from '@/components/ads/AdSlot'
+import { JsonLd } from '@/components/seo/JsonLd'
 import { relativeTime } from '@/lib/utils'
 
 interface Props {
   params: Promise<{ slug: string }>
 }
 
-export async function generateMetadata({ params }: Props) {
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params
-  const post = await prisma.post.findUnique({ where: { slug } })
-  if (!post) return {}
+  const post = await prisma.post.findUnique({ where: { slug }, include: { author: true } })
+  if (!post) return { title: 'Post Not Found' }
+  const title = post.title ?? post.body.slice(0, 60)
+  const description = post.body.slice(0, 160)
   return {
-    title: post.title ?? post.body.slice(0, 60),
-    description: post.body.slice(0, 160),
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      type: post.type === 'ARTICLE' ? 'article' : 'website',
+      authors: [post.author.displayName],
+      publishedTime: post.createdAt.toISOString(),
+    },
+    twitter: { card: 'summary', title, description },
   }
 }
 
@@ -54,6 +67,33 @@ export default async function PostPage({ params }: Props) {
 
   if (!post) notFound()
 
+  const jsonLd = post.type === 'ARTICLE' ? {
+    '@context': 'https://schema.org',
+    '@type': 'Article',
+    headline: post.title,
+    description: post.body.slice(0, 160),
+    author: {
+      '@type': 'Person',
+      name: post.author.displayName,
+      url: `${process.env.NEXTAUTH_URL}/u/${post.author.username}`,
+    },
+    datePublished: post.createdAt.toISOString(),
+    dateModified: post.updatedAt.toISOString(),
+    publisher: {
+      '@type': 'Organization',
+      name: 'CareerDown',
+    },
+  } : {
+    '@context': 'https://schema.org',
+    '@type': 'SocialMediaPosting',
+    text: post.body,
+    author: {
+      '@type': 'Person',
+      name: post.author.displayName,
+    },
+    dateCreated: post.createdAt.toISOString(),
+  }
+
   // Check follow status
   const isOwnPost = currentUserId === post.authorId
   let isFollowing = false
@@ -73,6 +113,7 @@ export default async function PostPage({ params }: Props) {
 
   return (
     <div className="mx-auto max-w-2xl py-8">
+      <JsonLd data={jsonLd} />
       {/* Back link */}
       <Link href="/" className="mb-6 inline-flex items-center gap-1 text-sm text-slate-500 hover:text-slate-300">
         <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
@@ -87,7 +128,9 @@ export default async function PostPage({ params }: Props) {
           <span className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${post.type === 'ARTICLE' ? 'bg-indigo-600/20 text-indigo-400' : 'bg-slate-800 text-slate-400'}`}>
             {post.type}
           </span>
-          <span className="text-xs text-slate-500">{relativeTime(post.createdAt)}</span>
+          <time dateTime={post.createdAt.toISOString()} className="text-xs text-slate-500">
+            {relativeTime(post.createdAt)}
+          </time>
         </div>
 
         {/* Title (articles) */}
@@ -155,6 +198,8 @@ export default async function PostPage({ params }: Props) {
           <span>{post._count.reposts} reposts</span>
         </div>
       </article>
+
+      <AdSlot slot="below-article" className="mt-8" />
 
       {/* Comments */}
       <CommentsSection
