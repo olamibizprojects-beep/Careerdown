@@ -8,11 +8,27 @@ import PostCard from '@/components/feed/PostCard'
 import { AdSlot } from '@/components/ads/AdSlot'
 import { EmptyState } from '@/components/ui/EmptyState'
 
-const postInclude = {
-  author: true,
-  topics: { include: { topic: true } },
-  _count: { select: { likes: true, comments: true, reposts: true } },
-} as const
+type PostResult = {
+  id: string
+  type: string
+  title: string | null
+  body: string
+  slug: string
+  createdAt: Date
+  updatedAt: Date
+  authorId: string
+  author: {
+    id: string
+    username: string
+    displayName: string
+    avatarUrl: string | null
+    bio: string | null
+    email: string
+    createdAt: Date
+  }
+  topics: { topic: { id: string; name: string; slug: string } }[]
+  _count: { likes: number; comments: number; reposts: number }
+}
 
 function engagementScore(post: {
   _count: { likes: number; comments: number; reposts: number }
@@ -25,73 +41,65 @@ function engagementScore(post: {
   return post._count.likes * 2 + post._count.comments + post._count.reposts + recencyBoost
 }
 
+async function fetchPosts(currentUserId?: string): Promise<PostResult[]> {
+  const include = {
+    author: true,
+    topics: { include: { topic: true } },
+    _count: { select: { likes: true, comments: true, reposts: true } },
+  }
+
+  if (!currentUserId) {
+    return prisma.post.findMany({ take: 30, orderBy: { createdAt: 'desc' }, include }) as Promise<PostResult[]>
+  }
+
+  const follows = await prisma.follow.findMany({
+    where: { followerId: currentUserId },
+    select: { followingId: true },
+  })
+  const followingIds = follows.map((f) => f.followingId)
+
+  if (followingIds.length === 0) {
+    return prisma.post.findMany({ take: 30, orderBy: { createdAt: 'desc' }, include }) as Promise<PostResult[]>
+  }
+
+  const [followedPosts, globalPosts] = await Promise.all([
+    prisma.post.findMany({
+      where: { authorId: { in: followingIds } },
+      orderBy: { createdAt: 'desc' },
+      take: 30,
+      include,
+    }),
+    prisma.post.findMany({
+      where: { authorId: { notIn: followingIds } },
+      orderBy: { createdAt: 'desc' },
+      take: 20,
+      include,
+    }),
+  ])
+
+  const all = [...followedPosts, ...globalPosts] as PostResult[]
+  all.sort((a, b) => engagementScore(b) - engagementScore(a))
+  return all.slice(0, 30)
+}
+
 export default async function HomePage() {
   const session = await getServerSession(authOptions)
   const currentUserId = (session?.user as { id?: string } | null)?.id
 
-  type PostWithRelations = Awaited<ReturnType<typeof prisma.post.findMany<{ include: typeof postInclude }>>>[number]
-  let posts: PostWithRelations[]
-
-  if (currentUserId) {
-    // Get IDs of users the current user follows
-    const follows = await prisma.follow.findMany({
-      where: { followerId: currentUserId },
-      select: { followingId: true },
-    })
-    const followingIds = follows.map((f) => f.followingId)
-
-    if (followingIds.length > 0) {
-      // Fetch followed posts + global posts separately then merge
-      const [followedPosts, globalPosts] = await Promise.all([
-        prisma.post.findMany({
-          where: { authorId: { in: followingIds } },
-          orderBy: { createdAt: 'desc' },
-          take: 30,
-          include: postInclude,
-        }),
-        prisma.post.findMany({
-          where: { authorId: { notIn: followingIds } },
-          orderBy: { createdAt: 'desc' },
-          take: 20,
-          include: postInclude,
-        }),
-      ])
-
-      // Sort each group by engagement score
-      followedPosts.sort((a, b) => engagementScore(b) - engagementScore(a))
-      globalPosts.sort((a, b) => engagementScore(b) - engagementScore(a))
-
-      // Combine: followed first, then global
-      posts = [...followedPosts, ...globalPosts].slice(0, 30)
-    } else {
-      // No follows yet — global chronological
-      posts = await prisma.post.findMany({
-        take: 30,
-        orderBy: { createdAt: 'desc' },
-        include: postInclude,
-      })
-    }
-  } else {
-    // No session — global chronological
-    posts = await prisma.post.findMany({
-      take: 30,
-      orderBy: { createdAt: 'desc' },
-      include: postInclude,
-    })
-  }
-
-  const postIds: string[] = posts.map((p) => p.id)
+  const posts = await fetchPosts(currentUserId)
 
   const likedPostIds = new Set<string>()
   const repostedPostIds = new Set<string>()
-  if (currentUserId) {
+
+  if (currentUserId && posts.length > 0) {
+    const ids = posts.map((p) => p.id)
     const [likes, reposts] = await Promise.all([
       prisma.like.findMany({
-        where: { userId: currentUserId, postId: { in: postIds } },
+        where: { userId: currentUserId, postId: { in: ids } },
         select: { postId: true },
       }),
       prisma.repost.findMany({
-        where: { userId: currentUserId, postId: { in: postIds } },
+        where: { userId: currentUserId, postId: { in: ids } },
         select: { postId: true },
       }),
     ])
