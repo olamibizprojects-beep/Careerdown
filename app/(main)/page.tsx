@@ -1,10 +1,12 @@
 import Link from 'next/link'
+import { Suspense } from 'react'
 import { prisma } from '@/lib/prisma'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import Sidebar from '@/components/layout/Sidebar'
 import RightRail from '@/components/layout/RightRail'
 import PostCard from '@/components/feed/PostCard'
+import { SortTabs } from '@/components/feed/SortTabs'
 import { AdSlot } from '@/components/ads/AdSlot'
 import { EmptyState } from '@/components/ui/EmptyState'
 
@@ -41,15 +43,52 @@ function engagementScore(post: {
   return post._count.likes * 2 + post._count.comments + post._count.reposts + recencyBoost
 }
 
-async function fetchPosts(currentUserId?: string): Promise<PostResult[]> {
+async function fetchPosts(sort: string, currentUserId?: string): Promise<PostResult[]> {
   const include = {
     author: true,
     topics: { include: { topic: true } },
     _count: { select: { likes: true, comments: true, reposts: true } },
   }
 
+  // NEW: pure chronological
+  if (sort === 'new') {
+    return prisma.post.findMany({
+      take: 30,
+      orderBy: { createdAt: 'desc' },
+      include,
+    }) as Promise<PostResult[]>
+  }
+
+  // TOP: all-time most liked
+  if (sort === 'top') {
+    const posts = await prisma.post.findMany({
+      take: 50,
+      include,
+    }) as PostResult[]
+    posts.sort((a, b) => b._count.likes - a._count.likes)
+    return posts.slice(0, 30)
+  }
+
+  // RISING: last 48h sorted by engagement
+  if (sort === 'rising') {
+    const cutoff = new Date(Date.now() - 48 * 60 * 60 * 1000)
+    const posts = await prisma.post.findMany({
+      where: { createdAt: { gte: cutoff } },
+      take: 50,
+      include,
+    }) as PostResult[]
+    posts.sort((a, b) => engagementScore(b) - engagementScore(a))
+    return posts.slice(0, 30)
+  }
+
+  // HOT (default): followed users first + engagement score
   if (!currentUserId) {
-    return prisma.post.findMany({ take: 30, orderBy: { createdAt: 'desc' }, include }) as Promise<PostResult[]>
+    const posts = await prisma.post.findMany({
+      take: 50,
+      include,
+    }) as PostResult[]
+    posts.sort((a, b) => engagementScore(b) - engagementScore(a))
+    return posts.slice(0, 30)
   }
 
   const follows = await prisma.follow.findMany({
@@ -59,19 +98,19 @@ async function fetchPosts(currentUserId?: string): Promise<PostResult[]> {
   const followingIds = follows.map((f) => f.followingId)
 
   if (followingIds.length === 0) {
-    return prisma.post.findMany({ take: 30, orderBy: { createdAt: 'desc' }, include }) as Promise<PostResult[]>
+    const posts = await prisma.post.findMany({ take: 50, include }) as PostResult[]
+    posts.sort((a, b) => engagementScore(b) - engagementScore(a))
+    return posts.slice(0, 30)
   }
 
   const [followedPosts, globalPosts] = await Promise.all([
     prisma.post.findMany({
       where: { authorId: { in: followingIds } },
-      orderBy: { createdAt: 'desc' },
       take: 30,
       include,
     }),
     prisma.post.findMany({
       where: { authorId: { notIn: followingIds } },
-      orderBy: { createdAt: 'desc' },
       take: 20,
       include,
     }),
@@ -82,11 +121,18 @@ async function fetchPosts(currentUserId?: string): Promise<PostResult[]> {
   return all.slice(0, 30)
 }
 
-export default async function HomePage() {
+interface HomePageProps {
+  searchParams: Promise<{ sort?: string }>
+}
+
+export default async function HomePage({ searchParams }: HomePageProps) {
+  const { sort: sortParam } = await searchParams
+  const sort = ['hot', 'new', 'top', 'rising'].includes(sortParam ?? '') ? (sortParam ?? 'hot') : 'hot'
+
   const session = await getServerSession(authOptions)
   const currentUserId = (session?.user as { id?: string } | null)?.id
 
-  const posts = await fetchPosts(currentUserId)
+  const posts = await fetchPosts(sort, currentUserId)
 
   const likedPostIds = new Set<string>()
   const repostedPostIds = new Set<string>()
@@ -122,20 +168,9 @@ export default async function HomePage() {
             </svg>
             New Post
           </Link>
-          <div className="flex flex-1 gap-1 rounded-xl border border-slate-800 bg-slate-900 p-1">
-            {['Hot', 'New', 'Top', 'Rising'].map((tab, i) => (
-              <button
-                key={tab}
-                className={`flex-1 rounded-lg py-2 text-sm font-medium transition-colors ${
-                  i === 0
-                    ? 'bg-indigo-600 text-white'
-                    : 'text-slate-400 hover:bg-slate-800 hover:text-slate-200'
-                }`}
-              >
-                {tab}
-              </button>
-            ))}
-          </div>
+          <Suspense fallback={<div className="flex-1 h-10 rounded-xl bg-slate-900 animate-pulse" />}>
+            <SortTabs />
+          </Suspense>
         </div>
 
         {posts.length === 0 ? (
