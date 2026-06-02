@@ -29,7 +29,8 @@ export default async function HomePage() {
   const session = await getServerSession(authOptions)
   const currentUserId = (session?.user as { id?: string } | null)?.id
 
-  let posts: Awaited<ReturnType<typeof prisma.post.findMany<{ include: typeof postInclude }>>>
+  type PostWithRelations = Awaited<ReturnType<typeof prisma.post.findMany<{ include: typeof postInclude }>>>[number]
+  let posts: PostWithRelations[]
 
   if (currentUserId) {
     // Get IDs of users the current user follows
@@ -79,7 +80,7 @@ export default async function HomePage() {
     })
   }
 
-  const postIds = posts.map((p: { id: string }) => p.id)
+  const postIds: string[] = posts.map((p) => p.id)
 
   const likedPostIds = new Set<string>()
   const repostedPostIds = new Set<string>()
