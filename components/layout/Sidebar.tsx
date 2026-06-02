@@ -73,7 +73,7 @@ export default function Sidebar() {
 
         <div className="mt-6 border-t border-slate-800 pt-4">
           <Link
-            href="/post/new"
+            href="/compose"
             className="flex w-full items-center justify-center gap-2 rounded-full bg-indigo-600 py-2 text-sm font-medium text-white hover:bg-indigo-500"
           >
             <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">

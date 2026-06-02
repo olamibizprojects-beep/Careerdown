@@ -29,7 +29,10 @@
       "Bash(git commit -m 'fix: switch to PostgreSQL with pg adapter for Vercel compatibility *)",
       "Bash(node -e ' *)",
       "Bash(git commit -m 'fix: run prisma generate before build and on postinstall *)",
-      "Bash(git commit -m 'fix: switch to PostgreSQL \\(Neon\\) — migrate, seed, update all adapters *)"
+      "Bash(git commit -m 'fix: switch to PostgreSQL \\(Neon\\) — migrate, seed, update all adapters *)",
+      "Bash(git commit -m 'add: /api/health diagnostic endpoint for Vercel debugging *)",
+      "WebFetch(domain:careerdown.vercel.app)",
+      "Bash(git commit -m 'fix: add missing /following and /topics pages, fix /post/new → /compose *)"
     ]
   }
 }
