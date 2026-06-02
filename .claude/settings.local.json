@@ -16,7 +16,17 @@
       "Bash(node -e \"const m = require\\('/Users/a/Desktop/career down/node_modules/@prisma/adapter-better-sqlite3'\\); console.log\\(Object.keys\\(m\\)\\)\")",
       "Bash(mkdir -p \"/Users/a/Desktop/career down/app/api/auth/[...nextauth]\" \"/Users/a/Desktop/career down/app/api/auth/signup\" \"/Users/a/Desktop/career down/app/\\(auth\\)/login\" \"/Users/a/Desktop/career down/app/\\(auth\\)/signup\" \"/Users/a/Desktop/career down/app/\\(main\\)\" \"/Users/a/Desktop/career down/components/providers\")",
       "Bash(NEXTAUTH_SECRET=dev-secret-for-build npm run build)",
-      "Bash(npm run *)"
+      "Bash(npm run *)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:3000)",
+      "Bash(git remote *)",
+      "Bash(git branch *)",
+      "Bash(git push *)",
+      "Bash(git commit -m 'fix: add explicit type annotation to silence implicit any on posts.map *)",
+      "Bash(git commit --allow-empty -m 'fix: force Vercel redeploy with type annotation fix *)",
+      "Bash(git commit -m 'fix: explicit PostWithRelations type to resolve implicit any on Vercel *)",
+      "Bash(git commit -m 'fix: replace implicit Prisma return type with explicit PostResult type *)",
+      "Bash(git commit -m 'fix: disable noImplicitAny to resolve Vercel build error *)",
+      "Bash(git commit -m 'fix: switch to PostgreSQL with pg adapter for Vercel compatibility *)"
     ]
   }
 }
