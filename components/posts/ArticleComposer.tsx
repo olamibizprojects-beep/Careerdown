@@ -3,6 +3,7 @@ import { useState } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import { createArticle } from '@/lib/actions/posts'
+import { ImageUploader } from './ImageUploader'
 
 interface Topic {
   id: string
@@ -15,6 +16,7 @@ export default function ArticleComposer({ topics }: { topics: Topic[] }) {
   const router = useRouter()
   const [title, setTitle] = useState('')
   const [body, setBody] = useState('')
+  const [imageUrls, setImageUrls] = useState<string[]>([])
   const [selectedTopics, setSelectedTopics] = useState<string[]>([])
   const [error, setError] = useState('')
   const [submitting, setSubmitting] = useState(false)
@@ -42,6 +44,7 @@ export default function ArticleComposer({ topics }: { topics: Topic[] }) {
     const fd = new FormData()
     fd.append('title', title)
     fd.append('body', body)
+    fd.append('imageUrls', JSON.stringify(imageUrls))
     selectedTopics.forEach((id) => fd.append('topicIds', id))
     const result = await createArticle(fd)
     setSubmitting(false)
@@ -81,6 +84,8 @@ export default function ArticleComposer({ topics }: { topics: Topic[] }) {
           className="w-full rounded-lg border border-slate-700 bg-slate-800 px-4 py-3 text-sm text-slate-100 placeholder-slate-500 outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 resize-y font-mono"
         />
       </div>
+
+      <ImageUploader urls={imageUrls} onChange={setImageUrls} />
 
       {topics.length > 0 && (
         <div>

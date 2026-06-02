@@ -32,6 +32,7 @@ model Post {
   body      String
   slug      String     @unique
   createdAt DateTime   @default(now())
+  imageUrls String[]   @default([])
   updatedAt DateTime   @updatedAt
 
   author    User       @relation(fields: [authorId], references: [id], onDelete: Cascade)

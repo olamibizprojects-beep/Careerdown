@@ -30,6 +30,8 @@ export async function createThought(formData: FormData) {
   if (body.length > 1000) return { error: 'Body must be 1000 characters or fewer' }
 
   const topicIds = formData.getAll('topicIds') as string[]
+  const imageUrlsRaw = formData.get('imageUrls') as string
+  const imageUrls = imageUrlsRaw ? JSON.parse(imageUrlsRaw) : []
 
   const words = body.split(/\s+/).slice(0, 6).join(' ')
   const slug = generateSlug(words, shortId())
@@ -41,6 +43,7 @@ export async function createThought(formData: FormData) {
         type: 'THOUGHT',
         body,
         slug,
+        imageUrls,
         topics: topicIds.length > 0 ? {
           create: topicIds.map((topicId) => ({ topicId })),
         } : undefined,
@@ -72,6 +75,8 @@ export async function createArticle(formData: FormData) {
   if (!body) return { error: 'Body is required' }
 
   const topicIds = formData.getAll('topicIds') as string[]
+  const imageUrlsRaw = formData.get('imageUrls') as string
+  const imageUrls = imageUrlsRaw ? JSON.parse(imageUrlsRaw) : []
 
   const slug = generateSlug(title, shortId())
 
@@ -83,6 +88,7 @@ export async function createArticle(formData: FormData) {
         title,
         body,
         slug,
+        imageUrls,
         topics: topicIds.length > 0 ? {
           create: topicIds.map((topicId) => ({ topicId })),
         } : undefined,

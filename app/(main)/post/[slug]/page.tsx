@@ -143,6 +143,16 @@ export default async function PostPage({ params }: Props) {
           {post.body}
         </div>
 
+        {/* Images */}
+        {post.imageUrls && post.imageUrls.length > 0 && (
+          <div className={`mb-6 grid gap-2 rounded-xl overflow-hidden ${post.imageUrls.length === 1 ? 'grid-cols-1' : 'grid-cols-2'}`}>
+            {post.imageUrls.map((url) => (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img key={url} src={url} alt="" className="w-full object-cover rounded-lg" />
+            ))}
+          </div>
+        )}
+
         {/* Topics */}
         {post.topics.length > 0 && (
           <div className="mb-6 flex flex-wrap gap-2">

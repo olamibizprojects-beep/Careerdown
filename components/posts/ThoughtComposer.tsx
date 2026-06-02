@@ -3,6 +3,7 @@ import { useState, useRef } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import { createThought } from '@/lib/actions/posts'
+import { ImageUploader } from './ImageUploader'
 
 interface Topic {
   id: string
@@ -14,6 +15,7 @@ export default function ThoughtComposer({ topics }: { topics: Topic[] }) {
   const { data: session } = useSession()
   const router = useRouter()
   const [body, setBody] = useState('')
+  const [imageUrls, setImageUrls] = useState<string[]>([])
   const [selectedTopics, setSelectedTopics] = useState<string[]>([])
   const [error, setError] = useState('')
   const [submitting, setSubmitting] = useState(false)
@@ -41,6 +43,7 @@ export default function ThoughtComposer({ topics }: { topics: Topic[] }) {
     setSubmitting(true)
     const fd = new FormData()
     fd.append('body', body)
+    fd.append('imageUrls', JSON.stringify(imageUrls))
     selectedTopics.forEach((id) => fd.append('topicIds', id))
     const result = await createThought(fd)
     setSubmitting(false)
@@ -68,6 +71,8 @@ export default function ThoughtComposer({ topics }: { topics: Topic[] }) {
           {body.length} / 1000
         </div>
       </div>
+
+      <ImageUploader urls={imageUrls} onChange={setImageUrls} />
 
       {topics.length > 0 && (
         <div>

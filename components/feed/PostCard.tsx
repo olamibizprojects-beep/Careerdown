@@ -15,6 +15,7 @@ interface PostCardProps {
     author: { username: string; displayName: string; avatarUrl: string | null }
     topics: { topic: { name: string; slug: string } }[]
     _count: { likes: number; comments: number; reposts: number }
+    imageUrls?: string[]
   }
   currentUserId?: string
   isLiked?: boolean
@@ -122,6 +123,16 @@ export default function PostCard({ post, isLiked = false, isReposted = false }: 
           </p>
         )}
       </Link>
+
+      {/* Images */}
+      {post.imageUrls && post.imageUrls.length > 0 && (
+        <div className={`mt-3 grid gap-2 rounded-xl overflow-hidden ${post.imageUrls.length === 1 ? 'grid-cols-1' : 'grid-cols-2'}`}>
+          {post.imageUrls.slice(0, 4).map((url) => (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img key={url} src={url} alt="" className="w-full object-cover aspect-video rounded-lg" loading="lazy" />
+          ))}
+        </div>
+      )}
 
       {/* Topics */}
       {post.topics.length > 0 && (

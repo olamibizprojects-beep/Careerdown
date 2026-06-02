@@ -33,7 +33,9 @@
       "Bash(git commit -m 'add: /api/health diagnostic endpoint for Vercel debugging *)",
       "WebFetch(domain:careerdown.vercel.app)",
       "Bash(git commit -m 'fix: add missing /following and /topics pages, fix /post/new → /compose *)",
-      "Bash(git commit -m 'feat: wire up Hot/New/Top/Rising sort tabs with real logic *)"
+      "Bash(git commit -m 'feat: wire up Hot/New/Top/Rising sort tabs with real logic *)",
+      "Bash(npm install *)",
+      "Bash(git commit -m 'feat: add Cloudinary image uploads to posts *)"
     ]
   }
 }
